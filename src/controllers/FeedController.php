@@ -53,80 +53,6 @@ class FeedController extends Controller
         return;
 
     }
-    
-    /**
-     * @param array $data
-     * @return $this
-     */
-//    protected function _addTrees(&$data = [])
-//    {
-//        $query = Tree::find()->where(['cms_site_id' => \Yii::$app->skeeks->site->id]);
-//
-//        if (\Yii::$app->seo->activeTree) {
-//            $query->andWhere(['active' => 'Y']);
-//        }
-//
-//        if (\Yii::$app->seo->treeTypeIds) {
-//            $query->andWhere(['tree_type_id' => \Yii::$app->seo->treeTypeIds]);
-//        }
-//
-//        $trees = $query->orderBy(['level' => SORT_ASC, 'priority' => SORT_ASC])->all();
-//
-//        if ($trees) {
-//            /**
-//             * @var Tree $tree
-//             */
-//            foreach ($trees as $tree) {
-//                if (!$tree->redirect && !$tree->redirect_tree_id) {
-//                    $data[] =
-//                        [
-//                            "loc"     => $tree->absoluteUrl,
-//                            "lastmod" => $this->_lastMod($tree),
-//                            "changefreq" => "weekly",
-//                            "priority" => $this->_calculatePriority($tree)
-//                        ];
-//                }
-//            }
-//        }
-//
-//        return $this;
-//    }
-
-
-//    protected function _addContents(&$data = [])
-//    {
-//
-//        if (!\Yii::$app->seo->contentIds) {
-//            return;
-//        }
-//
-//        $query = CmsContent::find()
-//            ->select(['*', '(select count(*) FROM cms_content_element cce WHERE cce.content_id = cc.id AND cce.active = "Y" AND cce.published_at <= NOW()) as count'])
-//            ->from('cms_content cc')
-//            ->where(['id' => \Yii::$app->seo->contentIds]);
-//
-//        $contents = $query->orderBy(['updated_at' => SORT_DESC, 'priority' => SORT_ASC])->all();
-//
-//        //Добавление элементов в карту
-//        if ($contents) {
-//            /**
-//             * @var CmsContent $model
-//             */
-//            foreach ($contents as $model) {
-//
-//                $pages = ceil($model->raw_row['count'] / \Yii::$app->seo->sitemap_content_element_page_size);
-//
-//                for ($p = 1; $p <= $pages; $p++) {
-//                    $data[] = [
-//                        "loc"     => Url::to(['/seo/sitemap/content', 'code' => $model->code, 'page' => $p], true),
-//                        "lastmod" => $this->_lastMod($model),
-//                    ];
-//                }
-//            }
-//        }
-//
-//        return $this;
-//    }
 
     /**
      * @param array $data
@@ -164,7 +90,7 @@ class FeedController extends Controller
 
         $elements = $query->orderBy(['updated_at' => SORT_DESC, 'priority' => SORT_ASC])->all();
 
-        //Добавление элементов в карту
+        //Добавление элементов
         if ($elements) {
             /**
              * @var CmsContentElement $model
@@ -174,7 +100,7 @@ class FeedController extends Controller
                     [
                         "name" => $model->name,
                         "url"     => $model->absoluteUrl,
-                        "dt_start" => date(DATE_RSS, $model->publishet_at),
+                        "dt_start" => date(DATE_RSS, $model->published_at),
                         "img_src" => \frontend\helpers\Image::getModelImageUrl($model),
                         "text" => $model->description_full,
                         "category" => $model->tree_id ? $model->cmsTree->name : '',

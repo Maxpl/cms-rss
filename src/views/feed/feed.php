@@ -6,7 +6,7 @@
     <language><?=\Yii::$app->language;?></language>
     <description><?=\Yii::$app->cms->cmsSite->description;?></description>
     <image>
-        <url><?= \frontend\helpers\Url::to('@web/img/apple-touch-icon.png');?></url>
+    <url><?= \frontend\helpers\Url::to('@web/img/apple-touch-icon.png', 'https');?></url>
     </image>
     <generator>Skeeks CMS</generator>
     <?php foreach ($data as $item):?>
@@ -15,10 +15,10 @@
             <link><?=$item['url'];?></link>
             <category><?php if ($item['category']) 
                 echo htmlspecialchars($item['category'],ENT_QUOTES,\Yii::$app->charset); ?></category>
-            <description><![CDATA[
-                <?=$item['text'];?>]]>
-            </description>
-            <enclosure url="<?=$item['img_src'];?>" type="<?= \yii\helpers\FileHelper::getMimeType('@web'.$item['img_src']);?>" />
+            <description><![CDATA[<?=$item['text'];?>]]></description>
+            <?php if (is_file(ROOT_DIR.'/frontend/web'.$item['img_src'])):?>
+            <enclosure url="<?=$item['img_src'];?>" type="<?= \yii\helpers\FileHelper::getMimeType(ROOT_DIR.'/frontend/web'.$item['img_src']);?>" />
+            <?php endif;?>
             <pubDate><?= $item['dt_start'];?></pubDate>
         </item>
     <?php endforeach;?>
