@@ -1,0 +1,33 @@
+{
+	"name": "maxpl/cms-rss",
+	"description": "Component rss for SkeekS CMS",
+	"keywords": ["yii", "skeeks", "framework", "component", "rss"],
+    	"homepage": "https://cms.skeeks.com/",
+	"type": "yii2-extension",
+	"license": "BSD-3-Clause",
+	"support": {
+        "issues": "https://skeeks.com/",
+        "wiki": "https://cms.skeeks.com/docs/",
+        "source": "https://github.com/maxpl/cms-rss"
+    },
+	"authors": [
+		{
+			"name": "Maks Sloboda",
+			"email": "msloboda@ukr.net"
+		}
+	],
+	"require": {
+		"skeeks/cms": "^5.6.5 || dev-master"
+	},
+    "autoload": {
+        "psr-4": {
+            "skeeks\\cms\\rss\\": "src/"
+        }
+    },
+    "extra": {
+        "config-plugin": {
+            "web": "src/config/web.php",
+            "console": "src/config/console.php"
+        }
+    }
+}
