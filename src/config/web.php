@@ -1,7 +1,7 @@
 <?php
 return [
 
-//    'bootstrap' => ['rss'],
+    'bootstrap' => ['rss'],
 
     'components' => [
         'rss' => [
@@ -22,6 +22,7 @@ return [
 
         'urlManager' => [
             'rules' => [
+                'rss/<code:[\w-]+>-full.xml' => '/rss/feed/full',
                 'rss/<code:[\w-]+>.xml' => '/rss/feed/feed',
             ]
         ]

@@ -42,7 +42,7 @@ use yii\widgets\ListView;
  *
  * @author Maks Sloboda <msloboda@ukr.net>
  */
-class CmsRssComponent extends Component
+class CmsRssComponent extends Component implements BootstrapInterface
 {
     /**
      * @var int
@@ -87,7 +87,7 @@ class CmsRssComponent extends Component
     public function attributeLabels()
     {
         return ArrayHelper::merge(parent::attributeLabels(), [
-            'enableFeedsGenerator'    => \Yii::t('skeeks/rss', 'Enable meta links to feeds'),
+            'enableFeedsGenerator'    => \Yii::t('skeeks/rss', 'Enable altenate links to feeds'),
             'contentIds'              => \Yii::t('skeeks/cms', 'Elements of content'),
             'rss_content_element_page_size' => \Yii::t('skeeks/rss', 'Content Elements Page Size'),
         ]);
@@ -143,41 +143,50 @@ class CmsRssComponent extends Component
     }
 
 
-//    public function bootstrap($application)
-//    {
-//        if (!$application instanceof \yii\web\Application) {
-//            return true;
-//        }
-//
-//        /**
-//         * Генерация Rss feed links по дереву сайта
-//         */
-//        $application->view->on(View::EVENT_BEGIN_BODY, function (Event $e) {
-//
-//            /**
-//             * @var $view View
-//             */
-//            $view = $e->sender;
-//
-//            if ($this->enableFeedsGenerator && !BackendComponent::getCurrent()) {
-//                if (!\Yii::$app->request->isAjax && !\Yii::$app->request->isPjax) {
-//                    $this->_autoGenerateFeed($view);
-//                }
-//            }
-//        });
-//    }
+    public function bootstrap($application)
+    {
+        if (!$application instanceof \yii\web\Application) {
+            return true;
+        }
+
+        /**
+         * Генерация Rss feed links по дереву сайта
+         */
+        $application->view->on(View::EVENT_END_PAGE, function (Event $e) {
+
+            /**
+             * @var $view View
+             */
+            $view = $e->sender;
+
+            if ($this->enableFeedsGenerator && !BackendComponent::getCurrent()) {
+                if (!\Yii::$app->request->isAjax && !\Yii::$app->request->isPjax) {
+                    $this->_autoGenerateFeed($view);
+                }
+            }
+        });
+    }
 
     /**
      * @param View $view
      */
     protected function _autoGenerateFeed(\yii\web\View $view)
     {
-//        if (!isset($view->metaTags['keywords'])) {
-//            $view->registerMetaTag([
-//                "name"    => 'keywords',
-//                "content" => $this->_getKeywordsByContent($content),
-//            ], 'keywords');
-//        }
+        if (empty($this->contentIds))
+            return;
+        if(!isset($view->context->model))
+            return;
+        if(!isset($view->context->model->code))
+            return;
+        if (!$cmsContent = \skeeks\cms\models\CmsContent::findOne(['code' => $view->context->model->code]))
+            return;
+        if (in_array($cmsContent->id, $this->contentIds)) {
+            $view->registerLinkTag([
+                'href' => \frontend\helpers\Url::to('/rss/'.$view->context->model->code.'.xml', 'https'),
+                'rel' => 'alternate',
+                'type' => 'application/rss+xml',
+            ]);
+        }
     }
 
 }

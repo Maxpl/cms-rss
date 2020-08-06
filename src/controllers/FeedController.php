@@ -55,10 +55,42 @@ class FeedController extends Controller
     }
 
     /**
+     * @param $code
+     */
+    public function actionFull($code)
+    {
+        \Yii::$app->response->format = Response::FORMAT_XML;
+        $this->layout = false;
+        
+        $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
+        
+        self::_checkCache($filename);
+        
+        ini_set("memory_limit", "512M");
+
+        $result = [];
+
+        $this->_addElements($result, $code, true);
+        
+        $content = $this->render('feed', [
+            'data' => $result
+        ]);
+        
+        self::_sendCache($filename, $content);
+        
+        \Yii::$app->response->content = $content;
+
+        return;
+
+    }
+    
+    /**
      * @param array $data
+     * @param string $contentCode
+     * @param bool $fullText default false
      * @return $this
      */
-    protected function _addElements(&$data = [], $contentCode)
+    protected function _addElements(&$data = [], $contentCode, $fullText = false)
     {
         if (!$cmsContent = CmsContent::findOne(['code' => $contentCode]))
             return;
@@ -102,7 +134,7 @@ class FeedController extends Controller
                         "url"     => $model->absoluteUrl,
                         "dt_start" => date(DATE_RSS, $model->published_at),
                         "img_src" => \frontend\helpers\Image::getModelImageUrl($model),
-                        "text" => $model->description_full,
+                        "text" => $fullText ? $model->description_full : self::html_mb_substr($model->description_full,0,150),
                         "category" => $model->tree_id ? $model->cmsTree->name : '',
                     ];
             }
@@ -136,5 +168,21 @@ class FeedController extends Controller
             \Yii::$app->cache->set('rss:'.\Yii::$app->request->pathInfo, date('Y-m-d H:i:s',strtotime($delay)));
         } else
             \Yii::warning("Не могу создать директорию '".dirname($filename));
+    }
+    
+    private static function html_mb_substr($str, $from, $to) {
+        $str = strip_tags($str." ");
+        $ss = mb_substr($str, $from, $to);
+        $ctx = preg_match('~(.*)[\s]~sm', $ss, $matches);
+        if ($ctx == 0) {
+            $ctx = $ss . '...';
+        } else {
+            $ctx = $matches[1] . '...';
+        }
+        return self::ClearPHPTags($ctx);
+    }
+    
+    private static function ClearPHPTags($param) {
+        return str_replace(array('<?php', '?>', '<p>&nbsp;</p>'), array('&lt?php', '?&gt', ''), $param);
     }
 }
