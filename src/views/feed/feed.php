@@ -1,10 +1,12 @@
 <?php echo '<?xml version="1.0" encoding="'.\Yii::$app->charset.'"?>'.PHP_EOL; ?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel>
-    <title><?=\Yii::$app->cms->cmsSite->name;?></title>
-    <link><?= \frontend\helpers\Url::to('/', 'https'); ?></link>
+    <title><?=(!empty($tree) ? ($tree->meta_title ? $tree->meta_title : $tree->name) : \Yii::$app->cms->cmsSite->name);?></title>
+    <link><?= \frontend\helpers\Url::to('/'.$code, 'https'); ?></link>
     <language><?=\Yii::$app->language;?></language>
-    <description><?=\Yii::$app->cms->cmsSite->description;?></description>
+    <description><?=(!empty($tree) ? 
+            ($tree->meta_description ? $tree->meta_description : \Yii::$app->cms->cmsSite->description) 
+            : \Yii::$app->cms->cmsSite->description);?></description>
     <image>
     <url><?= \frontend\helpers\Url::to(\frontend\assets\AppAsset::getAssetUrl('img/apple-touch-icon.png'), 'https');?></url>
     </image>

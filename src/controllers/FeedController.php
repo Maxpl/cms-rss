@@ -43,6 +43,8 @@ class FeedController extends Controller
         $this->_addElements($result, $code);
         
         $content = $this->render($this->action->id, [
+            'tree' => Tree::findOne(['code' => $code]),
+            'code' => $code,
             'data' => $result
         ]);
         
@@ -73,6 +75,8 @@ class FeedController extends Controller
         $this->_addElements($result, $code, true);
         
         $content = $this->render('feed', [
+            'tree' => Tree::findOne(['code' => $code]),
+            'code' => $code,
             'data' => $result
         ]);
         
@@ -133,7 +137,7 @@ class FeedController extends Controller
                         "name" => $model->name,
                         "url"     => $model->absoluteUrl,
                         "dt_start" => date(DATE_RSS, $model->published_at),
-                        "img_src" => \frontend\helpers\Image::getModelImageUrl($model),
+                        "img_src" => \frontend\helpers\Url::to(\frontend\helpers\Image::getModelImageUrl($model), true),
                         "text" => $fullText ? $model->description_full : self::html_mb_substr($model->description_full,0,150),
                         "category" => $model->tree_id ? $model->cmsTree->name : '',
                     ];
