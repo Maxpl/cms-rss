@@ -1,5 +1,5 @@
 <?php echo '<?xml version="1.0" encoding="'.\Yii::$app->charset.'"?>'.PHP_EOL; ?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<rss xmlns:yandex="http://news.yandex.ru" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
     <channel>
     <title><?=(!empty($tree) ? ($tree->meta_title ? $tree->meta_title : $tree->name) : \Yii::$app->cms->cmsSite->name);?></title>
     <link><?= \frontend\helpers\Url::to('/'.$code, 'https'); ?></link>
@@ -14,7 +14,6 @@
 <?php foreach ($data as $item):?>
     <item>
         <title><?=htmlspecialchars($item['name'],ENT_QUOTES,\Yii::$app->charset);?></title>
-        <guid isPermaLink="true"><?=$item['url'];?></guid>
         <link><?=$item['url'];?></link>
         <?php if ($item['category']):?>
             <category><![CDATA['<?=htmlspecialchars($item['category'],ENT_QUOTES,\Yii::$app->charset);?>']]></category>
@@ -24,6 +23,7 @@
         <enclosure url="<?=$item['img_src'];?>" type="<?= \yii\helpers\FileHelper::getMimeType(ROOT_DIR.'/frontend/web'.$item['img_src']);?>"/>
         <?php endif;?>
         <pubDate><?= $item['dt_start'];?></pubDate>
+        <yandex:full-text><?= $item['full-text'];?></yandex:full-text>
     </item>
 <?php endforeach;?>
     </channel>

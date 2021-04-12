@@ -89,12 +89,101 @@ class FeedController extends Controller
     }
     
     /**
+     * @param $code
+     */
+    public function actionYandex($code)
+    {
+        \Yii::$app->response->format = Response::FORMAT_XML;
+        $this->layout = false;
+        
+        $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
+        
+        self::_checkCache($filename);
+        
+        ini_set("memory_limit", "512M");
+
+        $result = [];
+
+        $this->_addElementsYa($result, $code, true);
+        
+        $content = $this->render('yandex', [
+            'tree' => Tree::findOne(['code' => $code]),
+            'code' => $code,
+            'data' => $result
+        ]);
+        
+        self::_sendCache($filename, $content);
+        
+        \Yii::$app->response->content = $content;
+
+        return;
+
+    }
+    
+    /**
      * @param array $data
      * @param string $contentCode
      * @param bool $fullText default false
      * @return $this
      */
     protected function _addElements(&$data = [], $contentCode, $fullText = false)
+    {
+        $elements = self::getElements($contentCode);
+
+        //Добавление элементов
+        if ($elements) {
+            /**
+             * @var CmsContentElement $model
+             */
+            foreach ($elements as $model) {
+                $data[] =
+                    [
+                        "name" => $model->name,
+                        "url"     => $model->absoluteUrl,
+                        "dt_start" => date(DATE_RSS, $model->published_at),
+                        "img_src" => \frontend\helpers\Url::to(\frontend\helpers\Image::getModelImageUrl($model), true),
+                        "text" => $fullText ? htmlspecialchars($model->description_full) : self::html_mb_substr($model->description_full,0,150),
+                        "category" => $model->tree_id ? $model->cmsTree->name : '',
+                    ];
+            }
+        }
+
+        return $this;
+    }
+    
+    /**
+     * @param array $data
+     * @param string $contentCode
+     * @param bool $fullText default false
+     * @return $this
+     */
+    protected function _addElementsYa(&$data = [], $contentCode)
+    {
+        $elements = self::getElements($contentCode);
+
+        //Добавление элементов
+        if ($elements) {
+            /**
+             * @var CmsContentElement $model
+             */
+            foreach ($elements as $model) {
+                $data[] =
+                    [
+                        "name" => $model->name,
+                        "url"     => $model->absoluteUrl,
+                        "dt_start" => date(DATE_RSS, $model->published_at),
+                        "img_src" => \frontend\helpers\Url::to(\frontend\helpers\Image::getModelImageUrl($model), true),
+                        "text" => self::html_mb_substr($model->description_full,0,150),
+                        "full-text" => htmlspecialchars($model->description_full),
+                        "category" => $model->tree_id ? $model->cmsTree->name : '',
+                    ];
+            }
+        }
+
+        return $this;
+    }
+    
+    public static function getElements($contentCode)
     {
         if (!$cmsContent = CmsContent::findOne(['code' => $contentCode]))
             return;
@@ -124,27 +213,7 @@ class FeedController extends Controller
 
         $query->limit(\Yii::$app->rss->rss_content_element_page_size);
 
-        $elements = $query->orderBy(['updated_at' => SORT_DESC, 'priority' => SORT_ASC])->all();
-
-        //Добавление элементов
-        if ($elements) {
-            /**
-             * @var CmsContentElement $model
-             */
-            foreach ($elements as $model) {
-                $data[] =
-                    [
-                        "name" => $model->name,
-                        "url"     => $model->absoluteUrl,
-                        "dt_start" => date(DATE_RSS, $model->published_at),
-                        "img_src" => \frontend\helpers\Url::to(\frontend\helpers\Image::getModelImageUrl($model), true),
-                        "text" => $fullText ? $model->description_full : self::html_mb_substr($model->description_full,0,150),
-                        "category" => $model->tree_id ? $model->cmsTree->name : '',
-                    ];
-            }
-        }
-
-        return $this;
+        return $query->orderBy(['updated_at' => SORT_DESC, 'priority' => SORT_ASC])->all();
     }
     
     /**
