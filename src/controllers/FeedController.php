@@ -140,7 +140,7 @@ class FeedController extends Controller
                     [
                         "name" => $model->name,
                         "url"     => $model->absoluteUrl,
-                        "dt_start" => date(DATE_RSS, $model->published_at),
+                        "dt_start" => self::getRssDate($model->published_at),
                         "img_src" => \frontend\helpers\Url::to(\frontend\helpers\Image::getModelImageUrl($model), true),
                         "text" => $fullText ? htmlspecialchars($model->description_full) : self::html_mb_substr($model->description_full,0,150),
                         "category" => $model->tree_id ? $model->cmsTree->name : '',
@@ -171,7 +171,7 @@ class FeedController extends Controller
                     [
                         "name" => $model->name,
                         "url"     => $model->absoluteUrl,
-                        "dt_start" => date(DATE_RSS, $model->published_at),
+                        "dt_start" => self::getRssDate($model->published_at),
                         "img_src" => \frontend\helpers\Url::to(\frontend\helpers\Image::getModelImageUrl($model), true),
                         "text" => self::html_mb_substr($model->description_full,0,150),
                         "full-text" => htmlspecialchars($model->description_full),
@@ -234,13 +234,19 @@ class FeedController extends Controller
         }
     }
     
+    /**
+     * Check get and send to cache
+     * @param string $filename
+     * @param string $content
+     * @param string $delay +1 hours default
+     */
     private static function _sendCache($filename, $content, $delay='+1 hours') {
         if( is_dir(\Yii::getAlias('@frontend/web/assets/rss')) || @mkdir(\Yii::getAlias('@frontend/web/assets/rss'), 0777, true) ) {
             file_put_contents($filename, $content);
             @chmod($filename,0666);
             \Yii::$app->cache->set('rss:'.\Yii::$app->request->pathInfo, date('Y-m-d H:i:s',strtotime($delay)));
         } else
-            \Yii::warning("Не могу создать директорию '".dirname($filename));
+            \Yii::warning("Can not create directory '".dirname($filename));
     }
     
     private static function html_mb_substr($str, $from, $to) {
@@ -257,5 +263,20 @@ class FeedController extends Controller
     
     private static function ClearPHPTags($param) {
         return str_replace(array('<?php', '?>', '<p>&nbsp;</p>'), array('&lt?php', '?&gt', ''), $param);
+    }
+    
+    private static function getRssDate($time)
+    {
+        if (\Yii::$app->rss->timeZone && \Yii::$app->rss->timeZone <> \Yii::$app->timeZone)
+        {
+            date_default_timezone_set(\Yii::$app->rss->timeZone);
+            
+            $rssDate = date(DATE_RSS, $time);
+            
+            date_default_timezone_set(\Yii::$app->timeZone);
+        } else 
+            $rssDate = date(DATE_RSS, $time);
+        
+        return $rssDate;
     }
 }

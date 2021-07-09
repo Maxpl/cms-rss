@@ -58,6 +58,11 @@ class CmsRssComponent extends Component implements BootstrapInterface
      * @var string
      */
     public $contentIds = [];
+    
+    /**
+     * @var string
+     */
+    public $timeZone = '';
 
     /**
      * Можно задать название и описание компонента
@@ -79,6 +84,7 @@ class CmsRssComponent extends Component implements BootstrapInterface
     {
         return ArrayHelper::merge(parent::rules(), [
             [['enableFeedsGenerator'], 'integer'],
+            [['timeZone'], 'string'],
             [['contentIds'], 'safe'],
             ['rss_content_element_page_size', 'integer'],
         ]);
@@ -89,6 +95,7 @@ class CmsRssComponent extends Component implements BootstrapInterface
         return ArrayHelper::merge(parent::attributeLabels(), [
             'enableFeedsGenerator'    => \Yii::t('skeeks/rss', 'Enable altenate links to feeds'),
             'contentIds'              => \Yii::t('skeeks/cms', 'Elements of content'),
+            'timeZone'                => \Yii::t('skeeks/rss', 'Time zone which display date in feed'),
             'rss_content_element_page_size' => \Yii::t('skeeks/rss', 'Content Elements Page Size'),
         ]);
     }
@@ -97,8 +104,9 @@ class CmsRssComponent extends Component implements BootstrapInterface
     {
         return ArrayHelper::merge(parent::attributeHints(), [
             'contentIds'              => \Yii::t('skeeks/rss', 'If nothing is selected, then all'),
+            'timeZone'                => \Yii::t('skeeks/rss', 'If nothing, then show date in UTC'),
             'rss_content_element_page_size'        => \Yii::t('skeeks/rss',
-                'Количество елементов контента на одной странице'),
+                'Count elements on one page'),
 
         ]);
     }
@@ -133,6 +141,9 @@ class CmsRssComponent extends Component implements BootstrapInterface
                         'class' => SelectField::class,
                         'multiple' => true,
                         'items' => \skeeks\cms\models\CmsContent::getDataForSelect(),
+                    ],
+                    'timeZone'  => [
+                        'class'        => TextField::class,
                     ],
                     'rss_content_element_page_size'  => [
                         'class'        => TextField::class,
