@@ -10,6 +10,7 @@ namespace skeeks\cms\rss\controllers;
 
 use skeeks\cms\models\CmsContent;
 use skeeks\cms\models\CmsContentElement;
+use skeeks\cms\models\CmsContentProperty;
 use skeeks\cms\models\Tree;
 use skeeks\cms\seo\vendor\UrlHelper;
 use yii\helpers\Url;
@@ -36,6 +37,8 @@ class FeedController extends Controller
         
         self::_checkCache($filename);
         
+        $tree = $this->getTree($code);
+        
         ini_set("memory_limit", "512M");
 
         $result = [];
@@ -43,7 +46,7 @@ class FeedController extends Controller
         $this->_addElements($result, $code);
         
         $content = $this->render($this->action->id, [
-            'tree' => Tree::findOne(['code' => $code]),
+            'tree' => $tree,
             'code' => $code,
             'data' => $result
         ]);
@@ -68,6 +71,8 @@ class FeedController extends Controller
         
         self::_checkCache($filename);
         
+        $tree = $this->getTree($code);
+        
         ini_set("memory_limit", "512M");
 
         $result = [];
@@ -75,7 +80,41 @@ class FeedController extends Controller
         $this->_addElements($result, $code, true);
         
         $content = $this->render('feed', [
-            'tree' => Tree::findOne(['code' => $code]),
+            'tree' => $tree,
+            'code' => $code,
+            'data' => $result
+        ]);
+        
+        self::_sendCache($filename, $content);
+        
+        \Yii::$app->response->content = $content;
+
+        return;
+
+    }
+    
+    /**
+     * @param $code
+     */
+    public function actionUkrnet($code)
+    {
+        \Yii::$app->response->format = Response::FORMAT_XML;
+        $this->layout = false;
+        
+        $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
+        
+        self::_checkCache($filename);
+        
+        $tree = $this->getTree($code);
+        
+        ini_set("memory_limit", "512M");
+
+        $result = [];
+
+        $this->_addElementsYa($result, $code);
+        
+        $content = $this->render($this->action->id, [
+            'tree' => $tree,
             'code' => $code,
             'data' => $result
         ]);
@@ -100,14 +139,16 @@ class FeedController extends Controller
         
         self::_checkCache($filename);
         
+        $tree = $this->getTree($code);
+        
         ini_set("memory_limit", "512M");
 
         $result = [];
 
-        $this->_addElementsYa($result, $code, true);
+        $this->_addElementsYa($result, $code);
         
-        $content = $this->render('yandex', [
-            'tree' => Tree::findOne(['code' => $code]),
+        $content = $this->render($this->action->id, [
+            'tree' => $tree,
             'code' => $code,
             'data' => $result
         ]);
@@ -128,7 +169,7 @@ class FeedController extends Controller
      */
     protected function _addElements(&$data = [], $contentCode, $fullText = false)
     {
-        $elements = self::getElements($contentCode);
+        $elements = self::getElementsQuery($contentCode)->all();
 
         //Добавление элементов
         if ($elements) {
@@ -141,7 +182,7 @@ class FeedController extends Controller
                         "name" => $model->name,
                         "url"     => $model->absoluteUrl,
                         "dt_start" => self::getRssDate($model->published_at),
-                        "img_src" => \frontend\helpers\Url::to(\frontend\helpers\Image::getModelImageUrl($model), true),
+                        "img_src" => \frontend\helpers\Image::getModelImageUrl($model),
                         "text" => $fullText ? htmlspecialchars($model->description_full) : self::html_mb_substr($model->description_full,0,150),
                         "category" => $model->tree_id ? $model->cmsTree->name : '',
                     ];
@@ -159,7 +200,7 @@ class FeedController extends Controller
      */
     protected function _addElementsYa(&$data = [], $contentCode)
     {
-        $elements = self::getElements($contentCode);
+        $elements = self::getElementsQuery($contentCode)->all();
 
         //Добавление элементов
         if ($elements) {
@@ -172,7 +213,7 @@ class FeedController extends Controller
                         "name" => $model->name,
                         "url"     => $model->absoluteUrl,
                         "dt_start" => self::getRssDate($model->published_at),
-                        "img_src" => \frontend\helpers\Url::to(\frontend\helpers\Image::getModelImageUrl($model), true),
+                        "img_src" => \frontend\helpers\Image::getModelImageUrl($model),
                         "text" => self::html_mb_substr($model->description_full,0,150),
                         "full-text" => htmlspecialchars($model->description_full),
                         "category" => $model->tree_id ? $model->cmsTree->name : '',
@@ -183,7 +224,12 @@ class FeedController extends Controller
         return $this;
     }
     
-    public static function getElements($contentCode)
+    /**
+     * Return ActiveQuery
+     * @param string $contentCode
+     * @return object ActiveQuery
+     */
+    public static function getElementsQuery($contentCode)
     {
         if (!$cmsContent = CmsContent::findOne(['code' => $contentCode]))
             return;
@@ -210,12 +256,36 @@ class FeedController extends Controller
         );
 
         $query->andWhere([CmsContentElement::tableName() . '.active' => 'Y']);
+        
+        if (\Yii::$app->controller->action->id == 'ukrnet' && \Yii::$app->rss->rss_filter_is_ukrnet) {
+            
+            if ($propertyModel = CmsContentProperty::find()->where(['code' => 'isUkrnet'])->one())
+            
+            $query->joinWith('cmsContentElementProperties map');
+            
+            $query
+                ->andWhere(['map.property_id' => $propertyModel->id])
+                ->andWhere(['map.value_enum' => 1]);
+        }
 
         $query->limit(\Yii::$app->rss->rss_content_element_page_size);
 
-        return $query->orderBy(['updated_at' => SORT_DESC, 'priority' => SORT_ASC])->all();
+        return $query->orderBy(['updated_at' => SORT_DESC, 'priority' => SORT_ASC]);
     }
     
+    /**
+     * Get Tree model
+     * @param string $code
+     * @return type
+     * @throws NotFoundHttpException
+     */
+    public function getTree($code) {
+        if (!$tree = Tree::findOne(['code' => $code]))
+            throw new NotFoundHttpException(\Yii::t('skeeks/cms', 'Page not found'));
+                
+        return $tree;
+    }
+
     /**
      * Если файл существует и кеш еще не протух то работа приложения
      * завершается отдачей файла
@@ -249,6 +319,13 @@ class FeedController extends Controller
             \Yii::warning("Can not create directory '".dirname($filename));
     }
     
+    /**
+     * HTML to string shortener
+     * @param string $str Text or HTML text
+     * @param integer $from
+     * @param integer $to
+     * @return string
+     */
     private static function html_mb_substr($str, $from, $to) {
         $str = strip_tags($str." ");
         $ss = mb_substr($str, $from, $to);
@@ -261,6 +338,11 @@ class FeedController extends Controller
         return self::ClearPHPTags($ctx);
     }
     
+    /**
+     * Remove php tags
+     * @param string $param
+     * @return string
+     */
     private static function ClearPHPTags($param) {
         return str_replace(array('<?php', '?>', '<p>&nbsp;</p>'), array('&lt?php', '?&gt', ''), $param);
     }

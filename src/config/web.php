@@ -22,6 +22,7 @@ return [
 
         'urlManager' => [
             'rules' => [
+                'rss/<code:[\w-]+>-ukrnet.xml' => '/rss/feed/ukrnet',
                 'rss/<code:[\w-]+>-yandex.xml' => '/rss/feed/yandex',
                 'rss/<code:[\w-]+>-full.xml' => '/rss/feed/full',
                 'rss/<code:[\w-]+>.xml' => '/rss/feed/feed',

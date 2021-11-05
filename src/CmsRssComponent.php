@@ -55,6 +55,11 @@ class CmsRssComponent extends Component implements BootstrapInterface
     public $enableFeedsGenerator = false;
     
     /**
+     * @var bool включить фильтр по атрибуту isUkrnet
+     */
+    public $rss_filter_is_ukrnet = false;
+    
+    /**
      * @var string
      */
     public $contentIds = [];
@@ -86,7 +91,7 @@ class CmsRssComponent extends Component implements BootstrapInterface
             [['enableFeedsGenerator'], 'integer'],
             [['timeZone'], 'string'],
             [['contentIds'], 'safe'],
-            ['rss_content_element_page_size', 'integer'],
+            [['rss_content_element_page_size', 'rss_filter_is_ukrnet'], 'integer'],
         ]);
     }
 
@@ -97,6 +102,7 @@ class CmsRssComponent extends Component implements BootstrapInterface
             'contentIds'              => \Yii::t('skeeks/cms', 'Elements of content'),
             'timeZone'                => \Yii::t('skeeks/rss', 'Time zone which display date in feed'),
             'rss_content_element_page_size' => \Yii::t('skeeks/rss', 'Content Elements Page Size'),
+            'rss_filter_is_ukrnet' => \Yii::t('skeeks/rss', 'Content Elements isUkrnet filter enable'),
         ]);
     }
 
@@ -107,6 +113,8 @@ class CmsRssComponent extends Component implements BootstrapInterface
             'timeZone'                => \Yii::t('skeeks/rss', 'If nothing, then show date in UTC'),
             'rss_content_element_page_size'        => \Yii::t('skeeks/rss',
                 'Count elements on one page'),
+            'rss_filter_is_ukrnet'        => \Yii::t('skeeks/rss',
+                'Add and tunning related property with code isUkrnet, type boolean'),
 
         ]);
     }
@@ -135,6 +143,10 @@ class CmsRssComponent extends Component implements BootstrapInterface
                 'fields'         => [
                     'enableFeedsGenerator' => [
                         'class'     => BoolField::class,
+                        'allowNull' => false,
+                    ],
+                    'rss_filter_is_ukrnet'  => [
+                        'class'        => BoolField::class,
                         'allowNull' => false,
                     ],
                     'contentIds'        => [
@@ -193,7 +205,7 @@ class CmsRssComponent extends Component implements BootstrapInterface
             return;
         if (in_array($cmsContent->id, $this->contentIds)) {
             $view->registerLinkTag([
-                'href' => \frontend\helpers\Url::to('/rss/'.$view->context->model->code.'.xml', 'https'),
+                'href' => \frontend\helpers\Url::to('/rss/'.$view->context->model->code.'.xml', \Yii::$app->request->isSecureConnection ? 'https' : 'http'),
                 'rel' => 'alternate',
                 'type' => 'application/rss+xml',
             ]);

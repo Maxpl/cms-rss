@@ -1,6 +1,8 @@
 <?php
 return [
+    'Add and tunning related property with code isUkrnet, type boolean' => 'Добавьте и настройте булевое свойство контента с кодом isUkrnet',
     'Content Elements Page Size' => 'Количество элементов на странице',
+    'Content Elements isUkrnet filter enable' => 'Включить фильтрацию контента по свойству isUkrnet',
     'Count elements on one page' => 'Количество елементов контента на одной странице',
     'Enable altenate links to feeds' => 'Включить генерацию альтернативных ссылок на rss ленту',
     'If nothing, then show date in UTC' => 'Если пусто, даты отображаются в UTC',
