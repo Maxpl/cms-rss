@@ -1,4 +1,4 @@
-<?php echo '<?xml version="1.0" encoding=""'.\Yii::$app->charset.'""?>'.PHP_EOL; ?>
+<?php echo '<?xml version="1.0" encoding="'.\Yii::$app->charset.'"?>'.PHP_EOL; ?>
 <rss version="2.0" xmlns="http://backend.userland.com/rss2">
     <channel>
         <title><?=(!empty($tree) ? ($tree->meta_title ? $tree->meta_title : $tree->name) : \Yii::$app->cms->cmsSite->name);?></title>

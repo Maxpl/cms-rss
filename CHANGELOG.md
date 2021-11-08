@@ -1,6 +1,10 @@
 CHANGELOG
 ==============
 
+1.0.7
+-----------------
+  * Fix Ukrnet encoding
+
 1.0.6
 -----------------
   * Add Ukrnet feed with filter related property
