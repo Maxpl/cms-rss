@@ -68,6 +68,10 @@ class CmsRssComponent extends Component implements BootstrapInterface
      * @var string
      */
     public $timeZone = '';
+    /**
+     * @var string
+     */
+    public $isCache = true;
 
     /**
      * Можно задать название и описание компонента
@@ -88,7 +92,7 @@ class CmsRssComponent extends Component implements BootstrapInterface
     public function rules()
     {
         return ArrayHelper::merge(parent::rules(), [
-            [['enableFeedsGenerator'], 'integer'],
+            [['enableFeedsGenerator','isCache'], 'integer'],
             [['timeZone'], 'string'],
             [['contentIds'], 'safe'],
             [['rss_content_element_page_size', 'rss_filter_is_ukrnet'], 'integer'],
@@ -99,6 +103,7 @@ class CmsRssComponent extends Component implements BootstrapInterface
     {
         return ArrayHelper::merge(parent::attributeLabels(), [
             'enableFeedsGenerator'    => \Yii::t('skeeks/rss', 'Enable altenate links to feeds'),
+            'isCache'                 => \Yii::t('skeeks/rss', 'Enable cache feeds'),
             'contentIds'              => \Yii::t('skeeks/cms', 'Elements of content'),
             'timeZone'                => \Yii::t('skeeks/rss', 'Time zone which display date in feed'),
             'rss_content_element_page_size' => \Yii::t('skeeks/rss', 'Content Elements Page Size'),
@@ -115,6 +120,8 @@ class CmsRssComponent extends Component implements BootstrapInterface
                 'Count elements on one page'),
             'rss_filter_is_ukrnet'        => \Yii::t('skeeks/rss',
                 'Add and tunning related property with code isUkrnet, type boolean'),
+            'isCache'        => \Yii::t('skeeks/rss',
+                'By default feeds cached for low average'),
 
         ]);
     }
@@ -142,6 +149,10 @@ class CmsRssComponent extends Component implements BootstrapInterface
                 ],
                 'fields'         => [
                     'enableFeedsGenerator' => [
+                        'class'     => BoolField::class,
+                        'allowNull' => false,
+                    ],
+                    'isCache' => [
                         'class'     => BoolField::class,
                         'allowNull' => false,
                     ],

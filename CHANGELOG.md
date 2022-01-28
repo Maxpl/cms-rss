@@ -1,6 +1,14 @@
 CHANGELOG
 ==============
 
+1.0.9
+-----------------
+  * Add flag isCache settings
+
+1.0.8
+-----------------
+  * Add tree check in elements query
+
 1.0.7
 -----------------
   * Fix Ukrnet encoding

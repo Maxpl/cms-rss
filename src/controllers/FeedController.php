@@ -37,7 +37,7 @@ class FeedController extends Controller
         
         $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
         
-        //self::_checkCache($filename);
+        self::_checkCache($filename);
         
         $code = $this->getTree($code);
         
@@ -310,6 +310,9 @@ class FeedController extends Controller
      * @return type file
      */
     private static function _checkCache($filename) {
+        
+        if (!\Yii::$app->rss->isCache)
+            return;
         
         $expire = \Yii::$app->cache->get('rss:'.\Yii::$app->request->pathInfo);
         
