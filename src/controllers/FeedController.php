@@ -25,6 +25,8 @@ use yii\widgets\ActiveForm;
  */
 class FeedController extends Controller
 {
+    public $tree;
+    
     /**
      * @param $code
      */
@@ -35,18 +37,18 @@ class FeedController extends Controller
         
         $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
         
-        self::_checkCache($filename);
+        //self::_checkCache($filename);
         
-        $tree = $this->getTree($code);
+        $code = $this->getTree($code);
         
         ini_set("memory_limit", "512M");
 
         $result = [];
-
+        
         $this->_addElements($result, $code);
         
         $content = $this->render($this->action->id, [
-            'tree' => $tree,
+            'tree' => $this->tree,
             'code' => $code,
             'data' => $result
         ]);
@@ -71,7 +73,7 @@ class FeedController extends Controller
         
         self::_checkCache($filename);
         
-        $tree = $this->getTree($code);
+        $code = $this->getTree($code);
         
         ini_set("memory_limit", "512M");
 
@@ -80,7 +82,7 @@ class FeedController extends Controller
         $this->_addElements($result, $code, true);
         
         $content = $this->render('feed', [
-            'tree' => $tree,
+            'tree' => $this->tree,
             'code' => $code,
             'data' => $result
         ]);
@@ -105,7 +107,7 @@ class FeedController extends Controller
         
         self::_checkCache($filename);
         
-        $tree = $this->getTree($code);
+        $code = $this->getTree($code);
         
         ini_set("memory_limit", "512M");
 
@@ -114,7 +116,7 @@ class FeedController extends Controller
         $this->_addElementsYa($result, $code);
         
         $content = $this->render($this->action->id, [
-            'tree' => $tree,
+            'tree' => $this->tree,
             'code' => $code,
             'data' => $result
         ]);
@@ -139,7 +141,7 @@ class FeedController extends Controller
         
         self::_checkCache($filename);
         
-        $tree = $this->getTree($code);
+        $code = $this->getTree($code);
         
         ini_set("memory_limit", "512M");
 
@@ -148,7 +150,7 @@ class FeedController extends Controller
         $this->_addElementsYa($result, $code);
         
         $content = $this->render($this->action->id, [
-            'tree' => $tree,
+            'tree' => $this->tree,
             'code' => $code,
             'data' => $result
         ]);
@@ -169,7 +171,7 @@ class FeedController extends Controller
      */
     protected function _addElements(&$data = [], $contentCode, $fullText = false)
     {
-        $elements = self::getElementsQuery($contentCode)->all();
+        $elements = self::getElementsQuery($contentCode, $this->tree)->all();
 
         //Добавление элементов
         if ($elements) {
@@ -200,7 +202,7 @@ class FeedController extends Controller
      */
     protected function _addElementsYa(&$data = [], $contentCode)
     {
-        $elements = self::getElementsQuery($contentCode)->all();
+        $elements = self::getElementsQuery($contentCode, $this->tree)->all();
 
         //Добавление элементов
         if ($elements) {
@@ -227,9 +229,10 @@ class FeedController extends Controller
     /**
      * Return ActiveQuery
      * @param string $contentCode
+     * @param object Tree
      * @return object ActiveQuery
      */
-    public static function getElementsQuery($contentCode)
+    public static function getElementsQuery($contentCode, $tree)
     {
         if (!$cmsContent = CmsContent::findOne(['code' => $contentCode]))
             return;
@@ -242,6 +245,10 @@ class FeedController extends Controller
             ->andWhere([Tree::tableName() . '.cms_site_id' => \Yii::$app->skeeks->site->id]);
 
         $query->andWhere(['content_id' => $cmsContent->id]);
+        
+        //Add rubrics
+        if ($tree && $tree->code != $contentCode)
+            $query->andWhere(['tree_id' => $tree->id]);        
 
         $query->andWhere(
             ["<=", CmsContentElement::tableName() . '.published_at', \Yii::$app->formatter->asTimestamp(time())]
@@ -276,14 +283,24 @@ class FeedController extends Controller
     /**
      * Get Tree model
      * @param string $code
-     * @return type
+     * @return string $code 
      * @throws NotFoundHttpException
      */
     public function getTree($code) {
-        if (!$tree = Tree::findOne(['code' => $code]))
+        
+        if (strpos($code, '-')) {
+            $subCode = substr($code, strpos($code, '-') + 1, strlen($code));
+            $code = stristr($code, '-', true);
+            if ($subTree = Tree::findOne(['code' => $subCode]))
+                $this->tree = $subTree;
+        } else { 
+            $this->tree = Tree::findOne(['code' => $code]);
+        }
+        
+        if (!$this->tree)
             throw new NotFoundHttpException(\Yii::t('skeeks/cms', 'Page not found'));
-                
-        return $tree;
+        
+        return $code;
     }
 
     /**
@@ -347,6 +364,11 @@ class FeedController extends Controller
         return str_replace(array('<?php', '?>', '<p>&nbsp;</p>'), array('&lt?php', '?&gt', ''), $param);
     }
     
+    /**
+     * Get Rss date format with \Yii::$app->rss->timeZone or \Yii::$app->timeZone
+     * @param type $time
+     * @return string $rssDate rss date fornat
+     */
     private static function getRssDate($time)
     {
         if (\Yii::$app->rss->timeZone && \Yii::$app->rss->timeZone <> \Yii::$app->timeZone)
