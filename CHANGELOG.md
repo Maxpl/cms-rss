@@ -1,6 +1,10 @@
 CHANGELOG
 ==============
 
+1.1.0
+-----------------
+  * Add feed concat materials
+
 1.0.9
 -----------------
   * Add flag isCache settings

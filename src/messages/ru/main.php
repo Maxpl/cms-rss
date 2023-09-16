@@ -1,10 +1,12 @@
 <?php
 return [
+    'Available source feeds /rss/all-elkz.xml' => 'Лента доступна по урлу /rss/all-elkz.xml',
     'Add and tunning related property with code isUkrnet, type boolean' => 'Добавьте и настройте булевое свойство контента с кодом isUkrnet',
     'By default feeds cached for low average' => 'По умолчанию рсс ленты кешируются для снижения нагрузки',
     'Content Elements Page Size' => 'Количество элементов на странице',
     'Content Elements isUkrnet filter enable' => 'Включить фильтрацию контента по свойству isUkrnet',
     'Count elements on one page' => 'Количество елементов контента на одной странице',
+    'Enable all materials to one feeds' => 'Включить rss ленту со всеми материалами',
     'Enable altenate links to feeds' => 'Включить генерацию альтернативных ссылок на rss ленту',
     'Enable cache feeds' => 'Включить кеширование',
     'If nothing, then show date in UTC' => 'Если пусто, даты отображаются в UTC',

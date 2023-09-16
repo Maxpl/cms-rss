@@ -1,5 +1,5 @@
 <?php echo '<?xml version="1.0" encoding="'.\Yii::$app->charset.'"?>'.PHP_EOL; ?>
-<rss version="2.0" xmlns="http://backend.userland.com/rss2">
+<rss xmlns:yandex="http://news.yandex.ru" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
     <channel>
     <title><?=(!empty($tree) ? ($tree->meta_title ? $tree->meta_title : $tree->name) : \Yii::$app->cms->cmsSite->name);?></title>
     <link><?= \frontend\helpers\Url::to('/'.$code, 'https'); ?></link>
@@ -20,10 +20,10 @@
         <?php endif;?>
         <description><![CDATA[<?=$item['text'];?>]]></description>
         <?php if (is_file(ROOT_DIR.'/frontend/web'.$item['img_src'])):?>
-        <enclosure url="<?= \frontend\helpers\Url::to($item['img_src'], 'https');?>" type="<?= \yii\helpers\FileHelper::getMimeType(ROOT_DIR.'/frontend/web'.$item['img_src']);?>"/>
+        <enclosure url="<?=\frontend\helpers\Url::to($item['img_src'], 'https');?>" type="<?= \yii\helpers\FileHelper::getMimeType(ROOT_DIR.'/frontend/web'.$item['img_src']);?>"/>
         <?php endif;?>
         <pubDate><?= $item['dt_start'];?></pubDate>
-        <full-text><?= $item['full-text'];?></full-text>
+        <yandex:full-text><?= $item['full-text'];?></yandex:full-text>
     </item>
 <?php endforeach;?>
     </channel>

@@ -12,12 +12,10 @@ use skeeks\cms\models\CmsContent;
 use skeeks\cms\models\CmsContentElement;
 use skeeks\cms\models\CmsContentProperty;
 use skeeks\cms\models\Tree;
-use skeeks\cms\seo\vendor\UrlHelper;
-use yii\helpers\Url;
+use yii\db\ActiveQuery;
 use yii\web\Controller;
 use yii\web\Response;
-use yii\web\View;
-use yii\widgets\ActiveForm;
+use yii\web\NotFoundHttpException;
 
 /**
  * Class FeedController
@@ -25,7 +23,7 @@ use yii\widgets\ActiveForm;
  */
 class FeedController extends Controller
 {
-    public $tree;
+    public $tree = null;
     
     /**
      * @param $code
@@ -162,7 +160,39 @@ class FeedController extends Controller
         return;
 
     }
-    
+
+    public function actionAllElkz()
+    {
+        if (!\Yii::$app->rss->enableFeedsConcat) {
+            throw new NotFoundHttpException("Feed not found or inactive");
+        }
+        
+        \Yii::$app->response->format = Response::FORMAT_XML;
+        $this->layout = false;
+        
+        $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
+        
+        self::_checkCache($filename);
+        
+        ini_set("memory_limit", "512M");
+
+        $result = [];
+
+        $this->_addElementsYa($result, 'all');
+        
+        $content = $this->render($this->action->id, [
+            'tree' => $this->tree,
+            'code' => 'all-elkz',
+            'data' => $result
+        ]);
+        
+        self::_sendCache($filename, $content);
+        
+        \Yii::$app->response->content = $content;
+
+        return;
+    }
+
     /**
      * @param array $data
      * @param string $contentCode
@@ -202,8 +232,11 @@ class FeedController extends Controller
      */
     protected function _addElementsYa(&$data = [], $contentCode)
     {
-        $elements = self::getElementsQuery($contentCode, $this->tree)->all();
-
+        if ($contentCode == 'all') {
+            $elements = self::getAllElementsQuery()->all();
+        } else {
+            $elements = self::getElementsQuery($contentCode, $this->tree)->all();
+        }
         //Добавление элементов
         if ($elements) {
             /**
@@ -250,6 +283,40 @@ class FeedController extends Controller
         if ($tree && $tree->code != $contentCode)
             $query->andWhere(['tree_id' => $tree->id]);        
 
+        if (\Yii::$app->controller->action->id == 'ukrnet' && \Yii::$app->rss->rss_filter_is_ukrnet) {
+            
+            if ($propertyModel = CmsContentProperty::find()->where(['code' => 'isUkrnet'])->one())
+            
+            $query->joinWith('cmsContentElementProperties map');
+            
+            $query
+                ->andWhere(['map.property_id' => $propertyModel->id])
+                ->andWhere(['map.value_enum' => 1]);
+        }
+
+        return self::getBaseQuery($query);
+    }
+
+    /**
+     * Return ActiveQuery
+     * @return object ActiveQuery
+     */
+    public static function getAllElementsQuery()
+    {
+        if (count(\Yii::$app->rss->contentIds) < 1)
+            return;
+        
+        $query = CmsContentElement::find()
+            ->joinWith('cmsTree')
+            ->andWhere([Tree::tableName() . '.cms_site_id' => \Yii::$app->skeeks->site->id]);
+
+        $query->andWhere(['content_id' => \Yii::$app->rss->contentIds]);
+        
+        return self::getBaseQuery($query);
+    }
+
+    protected static function getBaseQuery(ActiveQuery $query): ActiveQuery
+    {
         $query->andWhere(
             ["<=", CmsContentElement::tableName() . '.published_at', \Yii::$app->formatter->asTimestamp(time())]
         );
@@ -264,20 +331,9 @@ class FeedController extends Controller
 
         $query->andWhere([CmsContentElement::tableName() . '.active' => 'Y']);
         
-        if (\Yii::$app->controller->action->id == 'ukrnet' && \Yii::$app->rss->rss_filter_is_ukrnet) {
-            
-            if ($propertyModel = CmsContentProperty::find()->where(['code' => 'isUkrnet'])->one())
-            
-            $query->joinWith('cmsContentElementProperties map');
-            
-            $query
-                ->andWhere(['map.property_id' => $propertyModel->id])
-                ->andWhere(['map.value_enum' => 1]);
-        }
-
         $query->limit(\Yii::$app->rss->rss_content_element_page_size);
-
-        return $query->orderBy(['updated_at' => SORT_DESC, 'priority' => SORT_ASC]);
+        
+        return $query->orderBy(['updated_at' => SORT_DESC, 'priority' => SORT_DESC]);
     }
     
     /**

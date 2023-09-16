@@ -50,6 +50,11 @@ class CmsRssComponent extends Component implements BootstrapInterface
     public $rss_content_element_page_size = 20;
 
     /**
+     * @var bool включить агрегацию рсс ленты /rss/all.xml
+     */
+    public $enableFeedsConcat = false;
+    
+    /**
      * @var bool включить автогенерацию мета ссылок на рсс ленты
      */
     public $enableFeedsGenerator = false;
@@ -92,7 +97,7 @@ class CmsRssComponent extends Component implements BootstrapInterface
     public function rules()
     {
         return ArrayHelper::merge(parent::rules(), [
-            [['enableFeedsGenerator','isCache'], 'integer'],
+            [['enableFeedsGenerator', 'isCache', 'enableFeedsConcat'], 'integer'],
             [['timeZone'], 'string'],
             [['contentIds'], 'safe'],
             [['rss_content_element_page_size', 'rss_filter_is_ukrnet'], 'integer'],
@@ -102,6 +107,7 @@ class CmsRssComponent extends Component implements BootstrapInterface
     public function attributeLabels()
     {
         return ArrayHelper::merge(parent::attributeLabels(), [
+            'enableFeedsConcat'    => \Yii::t('skeeks/rss', 'Enable all materials to one feeds'),
             'enableFeedsGenerator'    => \Yii::t('skeeks/rss', 'Enable altenate links to feeds'),
             'isCache'                 => \Yii::t('skeeks/rss', 'Enable cache feeds'),
             'contentIds'              => \Yii::t('skeeks/cms', 'Elements of content'),
@@ -122,7 +128,7 @@ class CmsRssComponent extends Component implements BootstrapInterface
                 'Add and tunning related property with code isUkrnet, type boolean'),
             'isCache'        => \Yii::t('skeeks/rss',
                 'By default feeds cached for low average'),
-
+            'enableFeedsConcat' => \Yii::t('skeeks/rss', 'Available source feeds /rss/all-elkz.xml'),
         ]);
     }
 
@@ -148,6 +154,10 @@ class CmsRssComponent extends Component implements BootstrapInterface
                     'isOpen' => true,
                 ],
                 'fields'         => [
+                    'enableFeedsConcat' => [
+                        'class'     => BoolField::class,
+                        'allowNull' => false,
+                    ],
                     'enableFeedsGenerator' => [
                         'class'     => BoolField::class,
                         'allowNull' => false,
