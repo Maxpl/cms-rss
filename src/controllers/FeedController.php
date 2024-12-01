@@ -350,20 +350,22 @@ class FeedController extends Controller
      * @return string $code 
      * @throws NotFoundHttpException
      */
-    public function getTree($code) {
+    public function getTree($code): string
+    {
+        $this->tree = Tree::findOne(['code' => $code]);
 
-        if (strpos($code, '-')) {
+        if (is_null($this->tree) && strpos($code, '-')) {
             $subCode = substr($code, strpos($code, '-') + 1, strlen($code));
-            $code = stristr($code, '-', true);
-            if ($subTree = Tree::findOne(['code' => $subCode]))
+
+            if ($subTree = Tree::findOne(['code' => $subCode])) {
                 $this->tree = $subTree;
-        } else { 
-            $this->tree = Tree::findOne(['code' => $code]);
+                $code = stristr($code, '-', true);
+            }
         }
 
-        if (!$this->tree)
+        if (!$this->tree) {
             throw new NotFoundHttpException(\Yii::t('skeeks/cms', 'Page not found'));
-
+        }
         return $code;
     }
 
