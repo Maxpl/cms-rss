@@ -265,14 +265,14 @@ class FeedController extends Controller
      * @param object Tree
      * @return object ActiveQuery
      */
-    public static function getElementsQuery($contentCode, $tree)
+    public static function getElementsQuery($contentCode, $tree): ?ActiveQuery
     {
-        if (!$cmsContent = CmsContent::findOne(['code' => $contentCode]))
-            return;
-
-        if (!in_array($cmsContent->id, \Yii::$app->rss->contentIds))
-            return;
-        
+        if (!$cmsContent = CmsContent::findOne(['code' => $contentCode])) {
+            return null;
+        }
+        if (!in_array($cmsContent->id, \Yii::$app->rss->contentIds)) {
+            return null;
+        }
         $query = CmsContentElement::find()
             ->joinWith('cmsTree')
             ->andWhere([Tree::tableName() . '.cms_site_id' => \Yii::$app->skeeks->site->id]);
@@ -280,18 +280,17 @@ class FeedController extends Controller
         $query->andWhere(['content_id' => $cmsContent->id]);
         
         //Add rubrics
-        if ($tree && $tree->code != $contentCode)
+        if ($tree && $tree->code != $contentCode) {
             $query->andWhere(['tree_id' => $tree->id]);        
-
+        }
         if (\Yii::$app->controller->action->id == 'ukrnet' && \Yii::$app->rss->rss_filter_is_ukrnet) {
             
-            if ($propertyModel = CmsContentProperty::find()->where(['code' => 'isUkrnet'])->one())
+            if ($propertyModel = CmsContentProperty::find()->where(['code' => 'isUkrnet'])->one()) {
             
-            $query->joinWith('cmsContentElementProperties map');
-            
-            $query
-                ->andWhere(['map.property_id' => $propertyModel->id])
-                ->andWhere(['map.value_enum' => 1]);
+                $query->joinWith('cmsContentElementProperties map')
+                    ->andWhere(['map.property_id' => $propertyModel->id])
+                    ->andWhere(['map.value_enum' => 1]);
+            }
         }
 
         return self::getBaseQuery($query);
@@ -301,10 +300,10 @@ class FeedController extends Controller
      * Return ActiveQuery
      * @return object ActiveQuery
      */
-    public static function getAllElementsQuery()
+    public static function getAllElementsQuery(): ?ActiveQuery
     {
         if (count(\Yii::$app->rss->contentIds) < 1)
-            return;
+            return null;
         
         $query = CmsContentElement::find()
             ->joinWith('cmsTree')
