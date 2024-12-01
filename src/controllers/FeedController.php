@@ -24,7 +24,7 @@ use yii\web\NotFoundHttpException;
 class FeedController extends Controller
 {
     public $tree = null;
-    
+
     /**
      * @param $code
      */
@@ -32,31 +32,30 @@ class FeedController extends Controller
     {
         \Yii::$app->response->format = Response::FORMAT_XML;
         $this->layout = false;
-        
+
         $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
-        
+
         self::_checkCache($filename);
-        
+
         $code = $this->getTree($code);
-        
+
         ini_set("memory_limit", "512M");
 
         $result = [];
-        
+
         $this->_addElements($result, $code);
-        
+
         $content = $this->render($this->action->id, [
             'tree' => $this->tree,
             'code' => $code,
             'data' => $result
         ]);
-        
+
         self::_sendCache($filename, $content);
-        
+
         \Yii::$app->response->content = $content;
 
         return;
-
     }
 
     /**
@@ -66,31 +65,30 @@ class FeedController extends Controller
     {
         \Yii::$app->response->format = Response::FORMAT_XML;
         $this->layout = false;
-        
+
         $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
-        
+
         self::_checkCache($filename);
-        
+
         $code = $this->getTree($code);
-        
+
         ini_set("memory_limit", "512M");
 
         $result = [];
 
         $this->_addElements($result, $code, true);
-        
+
         $content = $this->render('feed', [
             'tree' => $this->tree,
             'code' => $code,
             'data' => $result
         ]);
-        
+
         self::_sendCache($filename, $content);
-        
+
         \Yii::$app->response->content = $content;
 
         return;
-
     }
     
     /**
@@ -100,33 +98,32 @@ class FeedController extends Controller
     {
         \Yii::$app->response->format = Response::FORMAT_XML;
         $this->layout = false;
-        
+
         $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
-        
+
         self::_checkCache($filename);
-        
+
         $code = $this->getTree($code);
-        
+
         ini_set("memory_limit", "512M");
 
         $result = [];
 
         $this->_addElementsYa($result, $code);
-        
+
         $content = $this->render($this->action->id, [
             'tree' => $this->tree,
             'code' => $code,
             'data' => $result
         ]);
-        
+
         self::_sendCache($filename, $content);
-        
+
         \Yii::$app->response->content = $content;
 
         return;
-
     }
-    
+
     /**
      * @param $code
      */
@@ -134,31 +131,30 @@ class FeedController extends Controller
     {
         \Yii::$app->response->format = Response::FORMAT_XML;
         $this->layout = false;
-        
+
         $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
-        
+
         self::_checkCache($filename);
-        
+
         $code = $this->getTree($code);
-        
+
         ini_set("memory_limit", "512M");
 
         $result = [];
 
         $this->_addElementsYa($result, $code);
-        
+
         $content = $this->render($this->action->id, [
             'tree' => $this->tree,
             'code' => $code,
             'data' => $result
         ]);
-        
+
         self::_sendCache($filename, $content);
-        
+
         \Yii::$app->response->content = $content;
 
         return;
-
     }
 
     public function actionAllElkz()
@@ -166,28 +162,28 @@ class FeedController extends Controller
         if (!\Yii::$app->rss->enableFeedsConcat) {
             throw new NotFoundHttpException("Feed not found or inactive");
         }
-        
+
         \Yii::$app->response->format = Response::FORMAT_XML;
         $this->layout = false;
-        
+
         $filename = \Yii::getAlias('@frontend/web/assets/').\Yii::$app->request->pathInfo;
-        
+
         self::_checkCache($filename);
-        
+
         ini_set("memory_limit", "512M");
 
         $result = [];
 
         $this->_addElementsYa($result, 'all');
-        
+
         $content = $this->render($this->action->id, [
             'tree' => $this->tree,
             'code' => 'all-elkz',
             'data' => $result
         ]);
-        
+
         self::_sendCache($filename, $content);
-        
+
         \Yii::$app->response->content = $content;
 
         return;
@@ -201,7 +197,13 @@ class FeedController extends Controller
      */
     protected function _addElements(&$data = [], $contentCode, $fullText = false)
     {
-        $elements = self::getElementsQuery($contentCode, $this->tree)->all();
+        $query = self::getElementsQuery($contentCode, $this->tree);
+
+        if (!is_null($query)) {
+            $elements = $query->all();
+        } else {
+            return $this;
+        }
 
         //Добавление элементов
         if ($elements) {
@@ -223,7 +225,7 @@ class FeedController extends Controller
 
         return $this;
     }
-    
+
     /**
      * @param array $data
      * @param string $contentCode
@@ -233,10 +235,17 @@ class FeedController extends Controller
     protected function _addElementsYa(&$data = [], $contentCode)
     {
         if ($contentCode == 'all') {
-            $elements = self::getAllElementsQuery()->all();
+            $query = self::getAllElementsQuery();
         } else {
-            $elements = self::getElementsQuery($contentCode, $this->tree)->all();
+            $query = self::getElementsQuery($contentCode, $this->tree);
         }
+
+        if (!is_null($query)) {
+            $elements = $query->all();
+        } else {
+            return $this;
+        }
+
         //Добавление элементов
         if ($elements) {
             /**
@@ -278,15 +287,15 @@ class FeedController extends Controller
             ->andWhere([Tree::tableName() . '.cms_site_id' => \Yii::$app->skeeks->site->id]);
 
         $query->andWhere(['content_id' => $cmsContent->id]);
-        
+
         //Add rubrics
         if ($tree && $tree->code != $contentCode) {
             $query->andWhere(['tree_id' => $tree->id]);        
         }
         if (\Yii::$app->controller->action->id == 'ukrnet' && \Yii::$app->rss->rss_filter_is_ukrnet) {
-            
+
             if ($propertyModel = CmsContentProperty::find()->where(['code' => 'isUkrnet'])->one()) {
-            
+
                 $query->joinWith('cmsContentElementProperties map')
                     ->andWhere(['map.property_id' => $propertyModel->id])
                     ->andWhere(['map.value_enum' => 1]);
@@ -304,13 +313,13 @@ class FeedController extends Controller
     {
         if (count(\Yii::$app->rss->contentIds) < 1)
             return null;
-        
+
         $query = CmsContentElement::find()
             ->joinWith('cmsTree')
             ->andWhere([Tree::tableName() . '.cms_site_id' => \Yii::$app->skeeks->site->id]);
 
         $query->andWhere(['content_id' => \Yii::$app->rss->contentIds]);
-        
+
         return self::getBaseQuery($query);
     }
 
@@ -319,7 +328,7 @@ class FeedController extends Controller
         $query->andWhere(
             ["<=", CmsContentElement::tableName() . '.published_at', \Yii::$app->formatter->asTimestamp(time())]
         );
-        
+
         $query->andWhere(
             [
                 'or',
@@ -329,9 +338,9 @@ class FeedController extends Controller
         );
 
         $query->andWhere([CmsContentElement::tableName() . '.active' => 'Y']);
-        
+
         $query->limit(\Yii::$app->rss->rss_content_element_page_size);
-        
+
         return $query->orderBy(['updated_at' => SORT_DESC, 'priority' => SORT_DESC]);
     }
     
@@ -342,7 +351,7 @@ class FeedController extends Controller
      * @throws NotFoundHttpException
      */
     public function getTree($code) {
-        
+
         if (strpos($code, '-')) {
             $subCode = substr($code, strpos($code, '-') + 1, strlen($code));
             $code = stristr($code, '-', true);
@@ -351,10 +360,10 @@ class FeedController extends Controller
         } else { 
             $this->tree = Tree::findOne(['code' => $code]);
         }
-        
+
         if (!$this->tree)
             throw new NotFoundHttpException(\Yii::t('skeeks/cms', 'Page not found'));
-        
+
         return $code;
     }
 
@@ -365,16 +374,16 @@ class FeedController extends Controller
      * @return type file
      */
     private static function _checkCache($filename) {
-        
+
         if (!\Yii::$app->rss->isCache)
             return;
-        
+
         $expire = \Yii::$app->cache->get('rss:'.\Yii::$app->request->pathInfo);
-        
+
         if ($expire && $expire > date('Y-m-d H:i:s') && is_file($filename)) {
-            
+
             \Yii::$app->response->content = file_get_contents($filename);
-            
+
             \Yii::$app->end();
         }
     }
@@ -393,7 +402,7 @@ class FeedController extends Controller
         } else
             \Yii::warning("Can not create directory '".dirname($filename));
     }
-    
+
     /**
      * HTML to string shortener
      * @param string $str Text or HTML text
@@ -421,7 +430,7 @@ class FeedController extends Controller
     private static function ClearPHPTags($param) {
         return str_replace(array('<?php', '?>', '<p>&nbsp;</p>'), array('&lt?php', '?&gt', ''), $param);
     }
-    
+
     /**
      * Get Rss date format with \Yii::$app->rss->timeZone or \Yii::$app->timeZone
      * @param type $time
@@ -432,13 +441,13 @@ class FeedController extends Controller
         if (\Yii::$app->rss->timeZone && \Yii::$app->rss->timeZone <> \Yii::$app->timeZone)
         {
             date_default_timezone_set(\Yii::$app->rss->timeZone);
-            
+
             $rssDate = date(DATE_RSS, $time);
-            
+
             date_default_timezone_set(\Yii::$app->timeZone);
         } else 
             $rssDate = date(DATE_RSS, $time);
-        
+
         return $rssDate;
     }
 }
